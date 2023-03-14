@@ -1,0 +1,976 @@
+{% comment %} {% include "layouts/header.html" %}
+{% load static %}
+
+<style>
+    #video{
+        -webkit-transform:  translateY(-100%) rotate(0deg) ;
+        transform:  translateY(-100%) rotate(180deg);
+        -webkit-transform-origin: left bottom;
+        transform-origin: left bottom;
+        margin-left: 100%;
+    }
+    #preview_imgs_div{
+        -webkit-transform:  translateY(-100%) rotate(180deg) ;
+        transform:  translateY(-100%) rotate(180deg);
+        -webkit-transform-origin: left bottom;
+        transform-origin: left bottom;
+        /* float: right; */
+        margin-left: 100%;
+        width: 100%;
+    }
+</style>
+<div class="row">
+
+    <div class="col-sm-7">
+
+        <div class="row">
+
+            <div class="col-sm-12">
+
+                <form method="POST" id="img_acq_form" enctype="multipart/form-data" style="background-color: #ddd; border: 3px solid #000;">
+                    
+                    {% csrf_token %}
+
+                    <video style="width:100%; height: 395px; display: none;" id="video" autoplay playsinline></video>
+                    <img style="width:100%; height: 395px;" id="camera_img" src="{% static 'images/camera.png' %}"></video>
+                    <input type="hidden" id="img_value" name="img_value">
+
+                </form> 
+
+            </div>
+
+            <div class="col-sm-12 mb-3"></div>
+
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <div class="input-group mb-3">
+                        <select class="form-control" style="width: 100%;" id="inputGroupSelect01">
+                            <option selected>Choose Bottle Type...</option>
+                            <option value="1">Pantene</option>
+                            <option value="2">Head & Shoulders</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <div class="input-group mb-3">
+                        <select class="form-control" style="width: 100%;" id="bottle_size">
+                            <!-- <option selected>Choose Bottle Size...</option> -->
+                            <!-- <option value="1">Small</option> -->
+                            <option value="md">Medium</option>
+                            <option value="lg">Large</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col-sm-4">
+                <button onclick="captureImage(this)" type="button" name="submit" class="btn btn-primary btn-block">Inspect</button>
+            </div>
+
+
+
+        </div>
+
+    </div>
+
+    <div class="col-sm-5">
+
+        <div class="row">
+
+            <div class="col-sm-12" style="">
+                <img style="width: 100%;" src="{% static 'images/ss_poster.png' %}">
+            </div>
+
+            <div class="col-sm-12 mb-3"></div>
+
+            <div class="col-sm-12" >
+                <div class="form-group">
+                    <div class="input-group mb-3">
+                        <select class="form-control" style="width: 100%;" id="selectCam">
+                        
+                        </select>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <div class="input-group mb-3">
+                        <button onclick="start_cam()" class="btn btn-primary btn-block">Start Camera</button>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <div class="input-group mb-3">
+                        <button onclick="stop_cam()" class="btn btn-primary btn-block">Stop Camera</button>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="col-sm-12" style="display: none;">
+                <div class="form-group">
+                    <div class="input-group mb-3">
+                        <button onclick="location.reload();" class="btn btn-danger btn-block">Restart</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-12 mb-3">
+                <div class="form-group" style="padding: 10px; color: #f00; border: 3px solid #f00;"><div class="input-group mb-3">
+                <p><b>Instructions</b></p>
+                <ul>
+                    <li>Select which camera to open from above dropdown. Then click "Start Camera" button.</li>
+                    <li>Do not forget to select the size and type of bottle from the dropdown on bottom left.</li>
+                </ul>
+                </div></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    
+    <div class="col-sm-12">
+        <div class="row" id="preview_imgs_div">
+
+        </div>
+    </div>
+
+
+</div>
+
+{% include "pages/results_modal.html" %}
+<script>
+
+let currentStream;
+const video = document.getElementById('video');
+const select = document.getElementById('selectCam');
+
+function gotDevices(mediaDevices) {
+    select.innerHTML = '<option>Choose Camera...</ option >';
+    select.appendChild(document.createElement('option'));
+    let count = 1;
+    mediaDevices.forEach(mediaDevice => {
+    if (mediaDevice.kind === 'videoinput') {
+        const label = mediaDevice.label || `Camera ${count++}`;
+
+        if (label != '') {
+            const option = document.createElement('option');
+            option.value = mediaDevice.deviceId;
+
+            if(!label.includes("Webcam")){
+                option.selected = true;
+            }
+
+            // console.log(label);
+
+            const textNode = document.createTextNode(label);
+            option.appendChild(textNode);
+            select.appendChild(option);
+        }
+    }
+    });
+}
+
+
+
+function captureImage(obj) {
+
+    //place_temp_imgs_in_preview_div();
+
+    // obj.disabled = true;
+    //align_camera();
+    //setTimeout(align_motor.bind(null,obj),6000);
+    
+    const video = document.getElementById('video');
+
+            const canvas = document.createElement("canvas");
+
+            // scale the canvas accordingly
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            console.log("width: "+canvas.width+" , height: "+ canvas.height)
+
+            // draw the video at that frame
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // convert it to a usable data URL
+            const dataURL = canvas.toDataURL();
+    
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+    });
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'img_model_inspect' %}",
+        data: {"img": dataURL},
+        success: (response) => {
+            
+            console.log(response);
+            $('#result_modal_body').html(response);
+            $('#modal-result').modal('toggle');
+            
+            //console.log(response.d1);
+            //console.log(response.d2);
+            //console.log(response.d3);
+            // console.log(response.d3);
+
+        },
+        error: function (response) {
+            // alert(response["responseJSON"]["error"]);
+            // $('#loader').modal('hide');
+        }
+    });
+    
+    
+
+
+
+}
+
+function align_motor(obj){
+    document.getElementById("img_0").style.display="block";
+    for(var i = 0; i < 4; i++){
+
+        setTimeout(place_img.bind(null, obj, i), 3000*i);
+
+    }
+}
+
+function align_camera() {
+
+    var bottle_size = $("#bottle_size").val();
+
+    $.ajaxSetup({
+        data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+    });
+    $.ajax({
+        type: 'POST',
+        data:{"bottle_size":bottle_size},
+        url: "{% url 'align_camera' %}",
+        success: function (response) {
+                console.log(response)
+            }
+        ,
+        error: function (response) {
+            alert(response["responseJSON"]["error"]);
+            // $('#loader').modal('hide');
+        }
+    });
+
+
+}
+
+
+
+function place_temp_imgs_in_preview_div(){
+    var src = "{% static 'images/loader_img.gif' %}";
+
+    $("#preview_imgs_div").html('');
+    $("#preview_imgs_div").append('<div class="col-sm-3" id=""><img style="width:100%; height:250px; display: none;" id="img_0" src="'+src+'"></div>');
+    $("#preview_imgs_div").append('<div class="col-sm-3" id=""><img style="width:100%; height:250px; display: none;" id="img_1" src="'+src+'"></div>');
+    $("#preview_imgs_div").append('<div class="col-sm-3" id=""><img style="width:100%; height:250px; display: none;" id="img_2" src="'+src+'"></div>');
+    $("#preview_imgs_div").append('<div class="col-sm-3" id=""><img style="width:100%; height:250px; display: none;" id="img_3" src="'+src+'"></div>');
+}
+
+$( document ).ready(function() {
+    place_temp_imgs_in_preview_div();
+});
+
+function place_img(obj, i){
+
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+    });
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'rotate_motor' %}",
+        success: function (response) {
+            const video = document.getElementById('video');
+
+            const canvas = document.createElement("canvas");
+
+            // scale the canvas accordingly
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            console.log("width: "+canvas.width+" , height: "+ canvas.height)
+
+            // draw the video at that frame
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // convert it to a usable data URL
+            const dataURL = canvas.toDataURL();
+            // img_display.src = dataURL;
+
+            // download(dataURL, "image_"+i+".png");
+
+            save_pic_on_backend(dataURL, i);
+
+            // add base64 format of captured image to form data
+            document.getElementById("img_value").value = dataURL;
+
+            document.getElementById("img_"+i).src = dataURL;
+            if(i<3){
+                document.getElementById("img_"+(i+1)).style.display="block";
+            }
+            if(i == 3){
+                obj.disabled = false;
+                
+                inspect();
+
+            }
+        },
+        error: function (response) {
+            // alert(response["responseJSON"]["error"]);
+            // $('#loader').modal('hide');
+        }
+    });
+    
+    
+}
+
+function inspect(){
+    var bottle_size = $("#bottle_size").val();
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+    });
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'inspect' %}",
+        data: {"bottle_size" : bottle_size},
+        success: function (response) {
+            $('#result_modal_body').html(response);
+            $('#modal-result').modal('toggle');
+        },
+        error: function (response) {
+            // alert(response["responseJSON"]["error"]);
+            // $('#loader').modal('hide');
+            // $('#modal-result').modal('toggle');
+        }
+    });
+}
+
+function save_pic_on_backend(img_dataUrl, i){
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+    });
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'save_img_on_server' %}",
+        data: {"img_dataUrl" : img_dataUrl, "i" : i},
+        success: function (response) {
+        },
+        error: function (response) {
+            // alert(response["responseJSON"]["error"]);
+            // $('#loader').modal('hide');
+        }
+    });
+}
+
+
+function download(dataurl, filename) {
+  const link = document.createElement("a");
+  link.href = dataurl;
+  link.download = filename;
+  link.click();
+}
+
+
+
+function stopMediaTracks(stream) {
+    stream.getTracks().forEach(track => {
+    track.stop();
+    });
+}
+
+
+  
+
+function start_cam() {
+
+    // stop current stream if exists
+    if (typeof currentStream !== 'undefined') {
+        stopMediaTracks(currentStream);
+    }
+
+    // define media constraints, select media device
+    const videoConstraints = {
+        width : {ideal:10000},
+        height : {ideal:10000}
+    };
+    if (select.value === '') {
+    videoConstraints.facingMode = 'environment';
+    } else {
+    videoConstraints.deviceId = { exact: select.value };
+    }
+    const constraints = {
+    video: videoConstraints,
+    audio: false
+    };
+
+    // start stream
+    navigator.mediaDevices
+    .getUserMedia(constraints)
+    .then(stream => {
+        currentStream = stream;
+        video.srcObject = stream;
+        document.getElementById("video").style.display = "block";
+        document.getElementById("camera_img").style.display = "none";
+        return navigator.mediaDevices.enumerateDevices();
+    })
+    .then(gotDevices)
+    .catch(error => {
+        console.error(error);
+    });
+};
+
+
+function stop_cam() {
+    document.getElementById("video").style.display = "none";
+    document.getElementById("camera_img").style.display = "block";
+    if (typeof currentStream !== 'undefined') {
+    stopMediaTracks(currentStream);
+    }
+}
+navigator.mediaDevices.enumerateDevices().then(gotDevices);
+
+</script>
+
+{% include "layouts/footer.html" %} {% endcomment %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picture Inspection</title>
+
+    <link rel="shortcut icon" type="x-icon" href="./static/images/photograph.png">
+
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css"
+        integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css"
+        integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Material Icons CDN -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+
+    <!-- CSS File -->
+    <link rel="stylesheet" href="./static/inspectionpage/inspection.css">
+
+    <!-- Boxicon Css File -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+
+
+</head>
+
+<body>
+    <div class="containerInspection">
+        <aside>
+            <div class="top">
+                <div class="logo">
+                    <img src="./static/homepage/logoMain.png">
+                </div>
+                <div class="close" id="close-btn">
+                    <span class="material-symbols-sharp">close</span>
+                </div>
+            </div>
+            <div class="sidebar">
+              <a href="{% url 'home' %}">
+                  <span class="material-symbols-sharp">dashboard</span>
+                  <h3>DASHBOARD</h3>
+              </a>
+              <a href="{% url 'results_page' %}">
+                  <span class="material-symbols-sharp">bar_chart</span>
+                  <h3>Bar Chart</h3>
+              </a>
+              <a href="{% url 'quality_check_page' %}" class="active">
+                  <span class="material-symbols-sharp">frame_inspect</span>
+                  <h3>INSPECTION</h3>
+              </a>
+              <a href="{% url 'faqs' %}">
+                  <span class="material-symbols-sharp">lab_profile</span>
+                  <h3>REPORTS</h3>
+              </a>
+              <a href="{% url 'about' %}">
+                  <span class="material-symbols-sharp">settings</span>
+                  <h3>SETTINGS</h3>
+              </a>
+              <a href="{% url 'logout' %}">
+                  <span class="material-symbols-sharp">logout</span>
+                  <h3>LOG<text class="danger">OUT</text></h3>
+              </a>
+          </div>
+      </aside>
+        
+        <div class="inspectionBody">
+            <div class="inspectionMain">
+                <div class="inspectionContainer">
+                    <div class="inspectionCameraWords">
+                        <h1>Insepction Camera</h1>
+                    </div>
+                    <div class="currentDateAndTime">
+                        <h3 id="displayDate"></h3>
+                        <h3 id="displayDateTime"></h3>
+                    </div>
+                    <div class="main_inspection">
+                        <div class="ccass">
+                            <div class="chooseCBS">
+
+                                <!-- Camera Selection -->
+
+                                {% comment %} <div class="chooseCamera">
+                                    <input type="text" class="textCamera" placeholder="Select Camera" readonly>
+                                    <div class="chooseCameraOption">
+
+                                        <div onclick="showCamera('Camera 1')">
+                                            <ion-icon name="camera-outline"></ion-icon>Camera 1
+                                        </div>
+
+                                        <div>
+                                            <ion-icon name="alert-circle-outline"></ion-icon>None
+                                        </div>
+
+                                    </div>
+                                    {% endcomment %}
+
+
+                                <div class="search_select_box">
+                                    <select class="w-100" id="videoSource">
+                                        <option selected disabled>Select Camera</option>
+                                    </select>
+                                </div>
+
+
+                                <!-- Bottle Type Selection -->
+                                <div class="chooseBottleType">
+                                    <input type="text" class="textBottle" placeholder="Select Bottle Type" readonly>
+                                    <div class="chooseBottleTypeOption">
+                                        <div onclick="showBottle('Pantene')">
+                                            <ion-icon name="beaker-outline"></ion-icon>Pantene
+                                        </div>
+                                        <div onclick="showBottle('Head n Shoulders')">
+                                            <ion-icon name="beaker-outline"></ion-icon>Head n Shoulders
+                                        </div>
+                                        <div>
+                                            <ion-icon name="alert-circle-outline"></ion-icon>None
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottle Type Selection -->
+                                <div class="chooseSize">
+                                    <input type="text" class="textSize" placeholder="Select Size" readonly>
+                                    <div class="chooseSizeOption">
+                                        <div onclick="showSize('Medium')">
+                                            <ion-icon name="resize-outline"></ion-icon>Small
+                                        </div>
+                                        <div onclick="showSize('Small')">
+                                            <ion-icon name="resize-outline"></ion-icon>Medium
+                                        </div>
+                                        <div onclick="showSize('Large')">
+                                            <ion-icon name="expand-outline"></ion-icon>Larger
+                                        </div>
+                                        <div>
+                                            <ion-icon name="alert-circle-outline"></ion-icon>None
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="cameraMainVideo">
+                                <div class="cameraVideo">
+                                    {% csrf_token %}
+                                    <video id="vid" autoplay></video>
+                                </div>
+                                <div class="allPicturesButtons">
+
+                                    <div class="inesrtBottleID">
+                                        <input type="text" class="inesrtBottleIDInput" placeholder="Insert Batch ID" id="batch_id_text">
+                                    </div>
+
+                                    <div class="startCameraAndTakePicture">
+                                        <div class="startCamera">
+                                            <button class="startCameraBtn" onclick="start_cam();">Start Camera</button>
+                                        </div>
+                                        <div class="takePicture">
+                                            <button class="takePictureBtn" onclick="stop_cam();">Stop Camera</button>
+                                        </div>
+                                    </div>
+
+                                    <button class="start-inspection-btn" onclick="captureImage(this)">Start Inspection</button>
+                                    {% comment %} <div class="containerProgressBar" id="containerProgressBar">
+                                        <div class="progress-bar" id="progress_percent"><b>0%</b></div>
+                                    </div> {% endcomment %}
+
+                                    <div class="restartAndStop">
+                                        <div class="restartBtnMain">
+                                            <button class="restartBtn"><i
+                                                    class="fa-solid fa-arrow-rotate-right" onclick="restart_inference()"></i></button>
+                                            <div class="restartBtnText"><b>Restart</b></div>
+                                        </div>
+                                        <div class="stopBtnMain">
+                                            <button class="stopBtn" onclick="stop_inference()"><i class="fa-regular fa-circle-stop"></i></button>
+                                            <div class="stopBtnText"><b>Stop</b></div>
+                                        </div>
+
+                                    </div>
+                                    <div class="timerDivMain">
+                                        <div class="timerDiv" id="timerDiv"><b>Time: </b></div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="mainNedLogos">
+                    <div class="nedLogos">
+                        <img src="./static/inspectionpage/nedlogo.png" alt="">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right">
+            <div class="top">
+                <button id="menu-btn">
+                    <span class="material-symbols-sharp">menu</span>
+                </button>
+                <div class="theme-toggler">
+                    <span class="material-symbols-sharp active">light_mode</span>
+                    <span class="material-symbols-sharp">dark_mode</span>
+                </div>
+            </div>
+        </div>
+        {% include "pages/results_modal.html" %}
+        
+
+        <script src="./static/homepage/index.js"></script>
+        <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+        <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+        
+        <!-- SCRIPT OF CAMERA SELECTION -->
+
+        <script>
+            function showBottle(anythingBottle) {
+                document.querySelector('.textBottle').value = anythingBottle;
+            }
+            let chooseBottleType = document.querySelector('.chooseBottleType');
+            chooseBottleType.onclick = function () {
+                chooseBottleType.classList.toggle('active');
+            }
+        </script>
+        <!-- SCRIPT OF BOTTLE TYPE SELECTION -->
+
+        <script>
+            function showSize(anythingSize) {
+                document.querySelector('.textSize').value = anythingSize;
+            }
+            let chooseSize = document.querySelector('.chooseSize');
+            chooseSize.onclick = function () {
+                chooseSize.classList.toggle('active');
+            }
+        </script>
+        <!-- SCRIPT OF SIZE SELECTION -->
+
+        <script>
+            const cameraButton = document.querySelector('.cameraMainVideo');
+            var vidElement = null;
+            function start() {
+                var camAvailable = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+                if (camAvailable) {
+                    vidElement = document.getElementById("vid");
+                    navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
+                        vidElement.srcObject = stream;
+                        vidElement.play();
+                    });
+                }
+            }
+            function stop() {
+                vidElement.remove();
+            }
+
+            
+
+        </script>
+        <!-- SCRIPT OF CAMERA -->
+
+
+        {% comment %} <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script> {% endcomment %}
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        {% comment %} <script src="https://code.jquery.com/jquery-3.3.1.min.js"> {% endcomment %}
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+
+        {% comment %} <script src="./static/inspectionpage/select.js"></script> {% endcomment %}
+
+        {% comment %} <script>
+
+            navigator.mediaDevices.enumerateDevices().then(function (devices) {
+                for (var i = 0; i < devices.length; i++) {
+                    var device = devices[i];
+                    if (device.kind === 'videoinput') {
+                        var option = document.createElement('option');
+                        option.value = device.deviceId;
+                        option.text = device.label || 'camera ' + (i + 1);
+                        document.querySelector('select#videoSource').appendChild(option);
+                    }
+                };
+            });
+            
+        </script>  {% endcomment %}
+
+
+        <!-- SCRIPT OF Choose Camera -->
+
+
+
+        {% comment %} <script type="text/javascript">
+
+            // var i = 0;
+            // function move() {
+            //     if (i == 0) {
+            //         i = 1;
+            //         var elem = document.getElementById("progress-bar");
+            //         var width = 10;
+            //         var id = setInterval(frame, 10);
+            //         function frame() {
+            //             if (width >= 100) {
+            //                 clearInterval(id);
+            //                 i = 0;
+            //             } else {
+            //                 width++;
+            //                 elem.style.width = width + "%";
+            //                 elem.innerHTML = width + "%";
+            //             }
+            //         }
+            //     }
+            // }
+
+            const upload = () => {
+                const progressBar = document.querySelector('.progress-bar')
+                progressBar.setAttribute('id', 'play-animation')
+            }
+
+        </script>
+       
+        {% endcomment %}
+        
+        <script>
+            console.log(
+                "{{inference_result}}");
+        </script>
+        <script>
+
+            let currentStream;
+            const video = document.getElementById('vid');
+            const select = document.getElementById('videoSource');
+            var intervalId;
+            var counter_interval = 0;
+            var ajaxCall = null;
+            var image_for_inspection=null;
+
+            function startInterval() {
+            intervalId = setInterval(function() {
+                counter_interval+=0.5;
+                document.getElementById('timerDiv').innerHTML = "<b>Time: " + counter_interval + "s</b>"
+            }, 500);
+            }
+
+            function stopInterval() {
+            clearInterval(intervalId);
+            counter_interval=0
+            document.getElementById('timerDiv').innerHTML = "<b>Time: </b>"
+            }
+
+            function gotDevices(mediaDevices) {
+                //select.innerHTML = '<option>Choose Camera...</ option >';
+                //select.appendChild(document.createElement('option'));
+                $(document).ready(function(){
+                    $('.search_select_box select').selectpicker();
+                })
+                let count = 1;
+                mediaDevices.forEach(mediaDevice => {
+                if (mediaDevice.kind === 'videoinput') {
+                    const label = mediaDevice.label || `Camera ${count++}`;
+
+                    if (label != '') {
+                        var option = document.createElement('option');
+                        option.value = mediaDevice.deviceId;
+
+                        if(!label.includes("Webcam")){
+                            option.selected = true;
+                        }
+
+                        // console.log(label);
+
+                        const textNode = document.createTextNode(label);
+                        option.text = label
+                        document.querySelector('select#videoSource').appendChild(option);
+                    }
+                }
+                });
+            }
+            
+            navigator.mediaDevices.enumerateDevices().then(gotDevices);
+            
+            function start_cam() {
+
+                // stop current stream if exists
+                if (typeof currentStream !== 'undefined') {
+                    stopMediaTracks(currentStream);
+                }
+            
+                // define media constraints, select media device
+                const videoConstraints = {
+                    width : {ideal:10000},
+                    height : {ideal:10000}
+                };
+                if (select.value === '') {
+                videoConstraints.facingMode = 'environment';
+                } else {
+                videoConstraints.deviceId = { exact: select.value };
+                }
+                const constraints = {
+                video: videoConstraints,
+                audio: false
+                };
+            
+                // start stream
+                navigator.mediaDevices
+                .getUserMedia(constraints)
+                .then(stream => {
+                    currentStream = stream;
+                    video.srcObject = stream;
+                    document.getElementById("vid").style.display = "block";
+                    //document.getElementById("camera_img").style.display = "none";
+                    return navigator.mediaDevices.enumerateDevices();
+                })
+                .then(gotDevices)
+                .catch(error => {
+                    console.error(error);
+                });
+            };
+            
+            
+            function stop_cam() {
+                document.getElementById("vid").style.display = "none";
+                //document.getElementById("camera_img").style.display = "block";
+                if (typeof currentStream !== 'undefined') {
+                stopMediaTracks(currentStream);
+                }
+            }
+
+            function stopMediaTracks(stream) {
+                stream.getTracks().forEach(track => {
+                track.stop();
+                });
+            }
+
+            function captureImage(obj) {
+
+                //place_temp_imgs_in_preview_div();
+            
+                // obj.disabled = true;
+                //align_camera();
+                //setTimeout(align_motor.bind(null,obj),6000);
+                stopInterval()
+                startInterval();
+                const video = document.getElementById('vid');
+                const canvas = document.createElement("canvas");
+               if (image_for_inspection === null) { 
+    
+                // scale the canvas accordingly
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+    
+                console.log("width: "+canvas.width+" , height: "+ canvas.height)
+    
+                // draw the video at that frame
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+                // convert it to a usable data URL
+                const dataURL = canvas.toDataURL();
+                image_for_inspection = dataURL;
+            }
+
+                $.ajaxSetup({
+                    data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+                });
+                ajaxCall = $.ajax({
+                    type: 'POST',
+                    url: "{% url 'img_model_inspect' %}",
+                    data: {"img": image_for_inspection, "batch_id": document.getElementById('batch_id_text').value, "bottle_size": document.querySelector('.textSize').value},
+                    success: function(response){
+                        //console.log(response.entries);
+                        $('#result_modal_body').html(response);
+                        $('#modal-result').modal('toggle');
+                        image_for_inspection = null;
+                        clearInterval(intervalId);
+
+                    },
+                    
+                    error: function (response) {
+                        // alert(response["responseJSON"]["error"]);
+                        // $('#loader').modal('hide');
+                    }
+                });
+
+
+            }
+
+            function stop_inference() {
+
+                if(ajaxCall!==null) {
+                    ajaxCall.abort();
+                    ajaxCall = null;
+                    clearInterval(intervalId);
+                }
+                else{
+                    alert("No inference is running");
+                }
+
+            }
+
+            
+            
+
+
+
+
+
+            
+            
+
+
+        </script> 
+
+
+</body>
+
+</html>

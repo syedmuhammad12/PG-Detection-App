@@ -1,0 +1,162 @@
+{% comment %} {% include "layouts/header.html" %}
+
+
+
+{% include "layouts/footer.html" %} {% endcomment %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picture Inspection</title>
+
+    <link rel="shortcut icon" type="x-icon" href="./static/images/photograph.png">
+
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css"
+        integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css"
+        integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Material Icons CDN -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
+
+    <!-- CSS File -->
+    <link rel="stylesheet" href="./static/settingspage/settings.css">
+
+    <!-- Boxicon Css File -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+
+<body>
+    <div class="container">
+        <aside>
+            <div class="top">
+                <div class="logo">
+                    <img src="./static/images/logoMain.png">
+                </div>
+                <div class="close" id="close-btn">
+                    <span class="material-symbols-sharp">close</span>
+                </div>
+            </div>
+            <div class="sidebar">
+                <a href="{% url 'home' %}">
+                    <span class="material-symbols-sharp">dashboard</span>
+                    <h3>DASHBOARD</h3>
+                </a>
+                <a href="{% url 'results_page' %}">
+                    <span class="material-symbols-sharp">bar_chart</span>
+                    <h3>Bar Chart</h3>
+                </a>
+                <a href="{% url 'quality_check_page' %}">
+                    <span class="material-symbols-sharp">frame_inspect</span>
+                    <h3>INSPECTION</h3>
+                </a>
+                <a href="{% url 'faqs' %}">
+                    <span class="material-symbols-sharp">lab_profile</span>
+                    <h3>REPORTS</h3>
+                </a>
+                <a href="{% url 'about' %}" class="active">
+                    <span class="material-symbols-sharp">settings</span>
+                    <h3>SETTINGS</h3>
+                </a>
+                <a href="{% url 'logout' %}">
+                    <span class="material-symbols-sharp">logout</span>
+                    <h3>LOG<text class="danger">OUT</text></h3>
+                </a>
+            </div>
+        </aside>
+        
+        <div class="inspectionBodySettings">
+            <div class="inspectionMainSettings">
+                <div class="inspectionContainerSettings">
+                    <div class="inspectionCameraWords">
+                        <h1>Set The Camera View</h1>
+                    </div>
+                    <div class="main_inspectionSettings">
+
+                        <div class="ccassSettings">
+
+                            <div class="cameraMainVideoSettings">
+                                <div class="cameraVideoSettings">
+                                    <video id="vidSettings" autoplay></video>
+                                </div>
+                                <div class="allPicturesButtons">
+                                    <div class="startCameraAndTakePicture">
+                                        <div class="startCamera">
+                                            <button class="startCameraBtn" onclick="start();">Start Camera</button>
+                                        </div>
+                                        <div class="takePicture">
+                                            <button class="takePictureBtn" onclick="stop();">Take Picture</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="restartAndStop">
+
+                                        <div class="angleUp">
+                                            <button class="angleUpBtn" title="Up Button"><i
+                                                    class="fa-solid fa-angles-up"></i></button>
+                                        </div>
+
+                                        <div class="angleRightLeft">
+
+                                            <div>
+                                                <button class="angleLeftBtn" title="Left Button"><i
+                                                        class="fa-solid fa-angles-left"></i></button>
+                                            </div>
+                                            <div>
+                                                <button class="angleRightBtn" title="Right Button"><i
+                                                        class="fa-solid fa-angles-right"></i></button>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="angleDown">
+
+                                            <button class="angleDownBtn" title="Down Button"><i
+                                                    class="fa-solid fa-angles-down"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="setCamera">
+                                        <button class="setCameraBtn"><i class="fa-regular fa-circle-check"></i> Set The
+                                            Camera</button>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+        <script src="./static/homepage/index.js"></script>
+        <script>
+            const cameraButton = document.querySelector('.cameraMainVideoSettings');
+            var vidElement = null;
+            function start() {
+                var camAvailable = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+                if (camAvailable) {
+                    vidElement = document.getElementById("vidSettings");
+                    navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
+                        vidElement.srcObject = stream;
+                        vidElement.play();
+                    });
+                }
+            }
+            function stop() {
+                vidElement.pause();
+            }
+
+        </script>
+</body>
+
+</html>

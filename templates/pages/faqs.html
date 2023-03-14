@@ -1,0 +1,156 @@
+{% comment %} {% include "layouts/header.html" %}
+
+
+
+{% include "layouts/footer.html" %} {% endcomment %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picture Inspection</title>
+
+    <link rel="shortcut icon" type="x-icon" href="./static/images/photograph.png">
+
+    <!-- Material Icons CDN -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
+
+    <!-- CSS File -->
+    <link rel="stylesheet" href="./static/reportspage/reports.css">
+</head>
+
+<body>
+    <div class="container">
+        <aside>
+            <div class="top">
+                <div class="logo">
+                    <img src="./static/images/logoMain.png">
+                </div>
+                <div class="close" id="close-btn">
+                    <span class="material-symbols-sharp">close</span>
+                </div>
+            </div>
+            <div class="sidebar">
+                <a href="{% url 'home' %}">
+                    <span class="material-symbols-sharp">dashboard</span>
+                    <h3>DASHBOARD</h3>
+                </a>
+                <a href="{% url 'results_page' %}">
+                    <span class="material-symbols-sharp">bar_chart</span>
+                    <h3>Bar Chart</h3>
+                </a>
+                <a href="{% url 'quality_check_page' %}">
+                    <span class="material-symbols-sharp">frame_inspect</span>
+                    <h3>INSPECTION</h3>
+                </a>
+                <a href="{% url 'faqs' %}" class="active">
+                    <span class="material-symbols-sharp">lab_profile</span>
+                    <h3>REPORTS</h3>
+                </a>
+                <a href="{% url 'about' %}">
+                    <span class="material-symbols-sharp">settings</span>
+                    <h3>SETTINGS</h3>
+                </a>
+                <a href="{% url 'logout' %}">
+                    <span class="material-symbols-sharp">logout</span>
+                    <h3>LOG<text class="danger">OUT</text></h3>
+                </a>
+            </div>
+        </aside>
+        
+        
+        <div class="bodyOfTable">
+            <div class="table" id="customers_table">
+                <section class="table_header">
+                    <h1>INSPECTION REPORT</h1>
+                    <div class="input-group">
+                        <input type="search" placeholder="Search Data...">
+                        <span class="material-symbols-sharp">search</span>
+                        <!-- <img src="./images/search.png" alt=""> -->
+                    </div>
+                    <div class="export_file">
+                        <label for="export-file" class="export_file-btn" title="Export File"></label>
+                        <input type="checkbox" id="export-file">
+                        <div class="export_file-options">
+                            <label>Export As &nbsp; &#10140;</label>
+                            <label for="export-file" id="toPDF">PDF<img src="./static/reportspage/pdf.png" alt=""></label>
+                            <label for="export-file" id="toJSON">JSON<img src="./static/reportspage/json.png" alt=""></label>
+                            <label for="export-file" id="toCSV">CSV<img src="./static/reportspage/csv.png" alt=""></label>
+                            <label for="export-file" id="toEXCEL">EXCEL<img src="./static/reportspage/excel.png" alt=""></label>
+                            <label for="export-file" id="toPRINT">PRINT<img src="./static/reportspage/printer.png" alt=""></label>
+                        </div>
+                    </div>
+                </section>
+                <section class="table_body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Bottle ID</th>
+                                <th>Status</th>
+                                <th>Result</th>
+                                <th>Examined At</th>
+                                <th>Preview</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {%for data in params.batch_data %}
+                            
+                            <tr>
+                                <td>{{data.0}}</td>
+                                {% if data.1 == "True" %}
+                                    <td>
+                                        <p class="statusStatus true">{{data.1}}</p>
+                                    </td>
+                                {%else%}
+                                    <td>
+                                        <p class="statusStatus false">{{data.1}}</p>
+                                    </td>
+                                {% endif %}
+
+                                {% if data.2 == "Acceptable" %}
+                                    <td>
+                                        <p class="statusResult acceptable">{{data.2}}</p>
+                                    </td>
+                                {% elif data.2 == "Marginal" %}
+                                    <td>
+                                        <p class="statusResult marginal">{{data.2}}</p>
+                                    </td>
+                                {%else%}
+                                    <td>
+                                        <p class="statusResult unacceptable">{{data.2}}</p>
+                                    </td>
+                                {% endif %}
+                                <td>{{data.3}}</td>
+                                <td><span class="material-symbols-sharp" onclick="openModal()">visibility</span></td>
+                                <!-- <td><button onclick="openModal()">Open Modal</button></td> -->
+                            </tr>
+                            {%endfor%}
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </div>
+        
+        <div class="right">
+            <div class="top">
+                <button id="menu-btn">
+                    <span class="material-symbols-sharp">menu</span>
+                </button>
+                <div class="theme-toggler">
+                    <span class="material-symbols-sharp active">light_mode</span>
+                    <span class="material-symbols-sharp">dark_mode</span>
+                </div>
+            </div>
+            
+        </div>
+
+        <script src="./static/homepage/index.js"></script>
+</body>
+
+</html>
